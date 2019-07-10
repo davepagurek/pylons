@@ -203,8 +203,41 @@ void ofApp::updateImage() {
     }
   }
   
+  {
+    ofPolyline birdPath;
+    float d = 800;
+    float v = 200;
+    glm:: vec3 dir(ofRandom(-v, v), ofRandom(-v, v), ofRandom(-v, v));
+    birdPath.addVertex(glm::vec3(ofRandom(-ofGetWidth()*0.8, ofGetWidth()*0.8), ofRandom(-2000, -2500), ofRandom(-300, -1000)));
+    for (size_t i = 0; i < 9; i++) {
+      birdPath.curveTo(birdPath.getVertices().back() + dir + glm::vec3(ofRandom(-d, d), ofRandom(-d, d), ofRandom(-d, d)));
+    }
+//    birdPath.draw();
+    
+    constexpr size_t numBirds = 60;
+    for (size_t i = 0; i < numBirds; i++) {
+      ofPushMatrix();
+      
+      float t = ofRandom(0, birdPath.getVertices().size());
+      ofTranslate(birdPath.getPointAtIndexInterpolated(t));
+      ofMultMatrix(glm::toMat4(glm::rotation(glm::vec3(0, 0, 1), birdPath.getTangentAtIndexInterpolated(t))));
+      ofScale(glm::vec3(5, 1, 1));
+      makeBird(ofRandom(0, 1)).draw();
+      
+      ofPopMatrix();
+    }
+  }
+  
   ofPopMatrix();
   sao.end(&img);
+}
+
+ofMesh ofApp::makeBird(float t) {
+  ofMesh m;
+  
+  
+  
+  return m;
 }
 
 ofMesh ofApp::skin(ofPolyline line, float r, ofColor c, int precision) {

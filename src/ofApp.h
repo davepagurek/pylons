@@ -15,6 +15,7 @@ private:
   glm::vec3 toSun;
   
   ofMesh skin(ofPolyline line, float r, ofColor c, int precision = 12);
+  ofMesh makeBird(float t);
 
 public:
   void setup();
