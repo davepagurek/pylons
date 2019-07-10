@@ -97,6 +97,8 @@ void ofApp::updateImage() {
   sunColor.setHex(0x968974);
 //  hillColor.setHex(0x3E5C56);
   
+  std::vector<glm::vec3> pylonLocations;
+  
   float xOff = 0;
   for (int i = 0; i < numHills; i++) {
     auto& hill = hills[i];
@@ -159,12 +161,36 @@ void ofApp::updateImage() {
     }
     
     auto pylonLocation = hill.getVertex(w * (static_cast<int>(h*ofRandom(0.4, 0.6)) + ofRandom(0.4, 0.6)));
+    pylonLocations.push_back(pylonLocation);
     ofPushMatrix();
     ofTranslate(pylonLocation);
     ofTranslate(glm::vec3(0, 20, 0));
     ofScale(80);
     pylon.draw();
     ofPopMatrix();
+  }
+  
+  for (auto offset : { glm::vec3(310, -470, 0), glm::vec3(365, -665, 0) }) {
+    for (auto side: { 1, -1 }) {
+      ofPath line;
+      line.setStrokeHexColor(0x333333);
+      line.setStrokeWidth(10);
+      line.setFilled(false);
+      
+      for (size_t i = 0; i < pylonLocations.size()-1; i++) {
+        glm::vec3 zOff(0, 0, 40);
+        auto a = pylonLocations[i] + (offset * glm::vec3(side, 1, 1)) - zOff;
+        auto b = pylonLocations[i+1] + (offset * glm::vec3(side, 1, 1)) + zOff;
+        auto midpoint = (a + b) * 0.5;
+        midpoint.y += glm::distance(a, b) * 0.3;
+        
+        line.moveTo(a + zOff * 2);
+        line.lineTo(a);
+        line.quadBezierTo(a, midpoint, b);
+      }
+      
+      line.draw();
+    }
   }
   
   ofPopMatrix();
