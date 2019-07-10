@@ -26,7 +26,7 @@ void ofApp::updateImage() {
   // Background
   ofColor top, bottom;
   top.setHex(0x9BCDE7);
-  bottom.setHex(0x2BB7B1);
+  bottom.setHex(0xEFE591);
   
   ofMesh bgRect;
   bgRect.addVertex(glm::vec3(0, 0, 0));
@@ -48,6 +48,9 @@ void ofApp::updateImage() {
   bgRect.draw();
   bg.end();
   
+  ofColor shadowColor;
+  shadowColor.setHex(0x4B1322);
+  sao.setShadowColor(shadowColor);
   
   sao.begin();
   sao.setFog(&bg);
@@ -59,6 +62,13 @@ void ofApp::updateImage() {
   
   z = ofRandom(0, 4000);
   
+  ofMesh tree = ofMesh::cone(16, 40, 6, 2);
+  ofColor treeColor;
+  treeColor.setHex(0x3E5C56);
+  for (size_t i = 0; i < tree.getNumVertices(); i++) {
+    tree.addColor(treeColor);
+  }
+  
   constexpr int numHills = 5;
   std::array<ofMesh, numHills> hills;
   constexpr size_t w = 200;
@@ -67,10 +77,8 @@ void ofApp::updateImage() {
   float h2 = h/2;
 
   ofColor hillColor;
-  hillColor.setHex(0x7D5151);
-//  ofColor foreground, background;
-//  foreground.setHex(0x9B6E6E);
-//  background.setHex(0x4FAA97);
+  hillColor.setHex(0x465652);
+//  hillColor.setHex(0x3E5C56);
   
   float xOff = 0;
   for (int i = 0; i < numHills; i++) {
@@ -105,6 +113,26 @@ void ofApp::updateImage() {
     }
     
     hill.draw();
+    
+    constexpr int numTrees = 6400;
+    auto faces = hill.getUniqueFaces();
+    for (int i = 0; i < numTrees; i++) {
+      ofPushMatrix();
+      auto* face = &faces[(int)ofRandom(faces.size())];
+      while (glm::dot(face->getFaceNormal(), glm::vec3(0, 1, 0)) < 0.1) {
+        face = &faces[(int)ofRandom(faces.size())];
+      }
+      ofTranslate((face->getVertex(0) + face->getVertex(1) + face->getVertex(2)) / 3.0);
+      ofTranslate(glm::vec3(0, -20, 0));
+      
+      auto quat = glm::rotation(glm::vec3(0, 1, 0), face->getFaceNormal());
+      auto lessRotated = glm::slerp(quat, glm::quat(), 0.8f);
+      ofMultMatrix(glm::toMat4(lessRotated));
+      
+      ofScale(glm::vec3(1, ofRandom(0.8, 2), 1));
+      tree.draw();
+      ofPopMatrix();
+    }
   }
   
   ofPopMatrix();

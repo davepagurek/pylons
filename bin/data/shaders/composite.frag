@@ -6,6 +6,7 @@ uniform sampler2DRect occlusion;
 uniform sampler2DRect fog;
 uniform bool useFog;
 uniform vec4 projInfo;
+uniform vec3 shadowColor;
 
 const float Z_NEAR = 1.0;
 const float Z_FAR = 1000.0;
@@ -52,7 +53,7 @@ void main() {
   vec2 screenSpaceOrigin = gl_FragCoord.xy;
   vec3 colorAtOrigin = texture(color, screenSpaceOrigin).xyz;
   float occlusionAtOrigin = blurAO(screenSpaceOrigin);
-  vec3 rawColor = occlusionAtOrigin * colorAtOrigin;
+  vec3 rawColor = mix(shadowColor, colorAtOrigin, occlusionAtOrigin);
   
   if (useFog) {
     float dist = max(length(worldFromScreen(gl_FragCoord.xy)) - 20.0, 0.0);

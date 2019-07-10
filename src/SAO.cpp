@@ -26,6 +26,8 @@ void SAO::setup() {
   deferred.load("shaders/deferred");
   occlusion.load("shaders/occlusion");
   composite.load("shaders/composite");
+  
+  shadow.setHex(0x000000);
 }
 
 void SAO::begin() {
@@ -43,6 +45,10 @@ void SAO::clearDepth() {
 
 void SAO::setFog(ofFbo* newFog) {
   fog = newFog;
+}
+
+void SAO::setShadowColor(ofColor color) {
+  shadow = color;
 }
 
 void SAO::end(ofFbo* fbo) {
@@ -81,6 +87,7 @@ void SAO::end(ofFbo* fbo) {
                          -2.0f / (ofGetHeight() * proj[1][1]),
                          (1.0f - proj[0][2]) / proj[0][0],
                          (1.0f + proj[1][2]) / proj[1][1]);
+  composite.setUniform3f("shadowColor", glm::vec3(shadow.r, shadow.g, shadow.b) / shadow.limit());
   deferredFbo.draw(0, 0);
   composite.end();
   if (fbo) fbo->end();
