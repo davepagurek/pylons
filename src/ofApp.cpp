@@ -143,7 +143,7 @@ void ofApp::updateImage() {
     for (int i = 0; i < numTrees; i++) {
       ofPushMatrix();
       auto* face = &faces[(int)ofRandom(faces.size())];
-      while (ofRandom(0, 1) > glm::dot(face->getFaceNormal(), glm::vec3(0, 1, 0))) {
+      while (ofRandom(0, 1) > std::pow(std::max(0.0f, glm::dot(face->getFaceNormal(), glm::vec3(0, 1, 0))), 2)) {
         face = &faces[(int)ofRandom(faces.size())];
       }
       ofTranslate((face->getVertex(0) + face->getVertex(1) + face->getVertex(2)) / 3.0);
@@ -170,31 +170,91 @@ void ofApp::updateImage() {
     ofPopMatrix();
   }
   
+  auto initialXOff = pylonLocations[0].x > 0 ? 1 : -1;
+  glm::vec3 zOff(0, 0, 40);
+  
   for (auto offset : { glm::vec3(310, -470, 0), glm::vec3(365, -665, 0) }) {
     for (auto side: { 1, -1 }) {
-      ofPath line;
-      line.setStrokeHexColor(0x333333);
-      line.setStrokeWidth(10);
-      line.setFilled(false);
+      ofPolyline line;
+      
+      {
+        auto a = glm::vec3(initialXOff * ofGetWidth() * 2, pylonLocations[0].y - 900, 1300) + (offset * glm::vec3(side, 1, 1)) - zOff;
+        auto b = pylonLocations[0] + (offset * glm::vec3(side, 1, 1)) + zOff;
+        auto midpoint = (a + b) * 0.5;
+        midpoint.y += glm::distance(a, b) * 0.3;
+        
+        line.quadBezierTo(a, midpoint, b);
+      }
       
       for (size_t i = 0; i < pylonLocations.size()-1; i++) {
-        glm::vec3 zOff(0, 0, 40);
         auto a = pylonLocations[i] + (offset * glm::vec3(side, 1, 1)) - zOff;
         auto b = pylonLocations[i+1] + (offset * glm::vec3(side, 1, 1)) + zOff;
         auto midpoint = (a + b) * 0.5;
         midpoint.y += glm::distance(a, b) * 0.3;
         
-        line.moveTo(a + zOff * 2);
+        line.addVertex(a + zOff * 2);
         line.lineTo(a);
         line.quadBezierTo(a, midpoint, b);
       }
       
-      line.draw();
+      ofColor cableColor;
+      cableColor.setHex(0x475156);
+      skin(line, 3, cableColor).draw();
     }
   }
   
   ofPopMatrix();
   sao.end(&img);
+}
+
+ofMesh ofApp::skin(ofPolyline line, float r, ofColor c, int precision) {
+  ofMesh m;
+  
+  for (size_t i = 0; i < line.getVertices().size(); i++) {
+    const auto& p = line.getVertices()[i];
+    const auto& tangent = line.getTangentAtIndex(i);
+    auto rotation = glm::toMat4(glm::rotation(glm::vec3(0, 0, 1), tangent));
+    
+    if (i == 0) {
+      m.addVertex(p);
+      m.addColor(c);
+    }
+    
+    for (size_t n = 0; n < precision; n++) {
+      bool isEndpoint = i == 0 || i == line.getVertices().size() - 1;
+      
+      float t = float(n) / float(precision) * 2 * PI;
+      glm::vec4 point(r*std::cos(t), r*std::sin(t), 0, 1);
+      point = rotation * point;
+      point += glm::vec4(p, 0);
+      
+      m.addVertex(glm::vec3(point));
+      m.addColor(c);
+      
+      if (isEndpoint) {
+        m.addIndex(i == 0 ? 0 : 1 + line.getVertices().size() * precision);
+        m.addIndex(1 + i*precision + n);
+        m.addIndex(1 + i*precision + ((n + 1) % precision));
+      }
+      
+      if (i > 0) {
+        m.addIndex(1 + i*precision + n);
+        m.addIndex(1 + i*precision + ((n + 1) % precision));
+        m.addIndex(1 + (i-1)*precision + ((n + 1) % precision));
+        
+        m.addIndex(1 + i*precision + n);
+        m.addIndex(1 + (i-1)*precision + n);
+        m.addIndex(1 + (i-1)*precision + ((n + 1) % precision));
+      }
+    }
+    
+    if (i == line.getVertices().size() - 1) {
+      m.addVertex(p);
+      m.addColor(c);
+    }
+  }
+  
+  return m;
 }
 
 //--------------------------------------------------------------

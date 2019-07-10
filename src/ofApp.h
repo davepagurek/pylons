@@ -13,6 +13,8 @@ private:
   float z;
   ofMesh pylon;
   glm::vec3 toSun;
+  
+  ofMesh skin(ofPolyline line, float r, ofColor c, int precision = 12);
 
 public:
   void setup();
