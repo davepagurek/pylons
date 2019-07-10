@@ -3,11 +3,22 @@
 uniform sampler2DRect depth;
 uniform sampler2DRect color;
 uniform sampler2DRect occlusion;
+uniform sampler2DRect fog;
+uniform bool useFog;
+uniform vec4 projInfo;
+
+const float Z_NEAR = 1.0;
+const float Z_FAR = 1000.0;
 
 const float EDGE_SHARPNESS = 1.0;
 const int SCALE = 1;
 
 out vec4 fragColor;
+
+vec3 worldFromScreen(const vec2 screen) {
+  float z = Z_NEAR * Z_FAR  / ((Z_NEAR - Z_FAR) * texture(depth, screen).x + Z_FAR);
+  return vec3((screen * projInfo.xy + projInfo.zw) * z, z);
+}
 
 float blurAO(vec2 screenSpaceOrigin) {
   float sum = texture(occlusion, screenSpaceOrigin).x;
@@ -41,5 +52,16 @@ void main() {
   vec2 screenSpaceOrigin = gl_FragCoord.xy;
   vec3 colorAtOrigin = texture(color, screenSpaceOrigin).xyz;
   float occlusionAtOrigin = blurAO(screenSpaceOrigin);
-  fragColor = vec4(occlusionAtOrigin * colorAtOrigin, 1.0);
+  vec3 rawColor = occlusionAtOrigin * colorAtOrigin;
+  
+  if (useFog) {
+    float dist = max(length(worldFromScreen(gl_FragCoord.xy)) - 20.0, 0.0);
+    float FOG_FACTOR = 0.05;
+    
+    // Beer-Lambert: exponential decay of light going through the medium
+    float fogFactor = 1.0 - clamp(exp(-dist * FOG_FACTOR), 0.0, 1.0);
+    fragColor = vec4(texture(fog, gl_FragCoord.xy).xyz * fogFactor + rawColor * (1.0 - fogFactor), 1.0);
+  } else {
+    fragColor = vec4(rawColor, 1.0);
+  }
 }

@@ -33,6 +33,7 @@
 		D342181222D37BEB00659A2F /* composite.frag */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = composite.frag; path = bin/data/shaders/composite.frag; sourceTree = SOURCE_ROOT; };
 		D342181322D37BEB00659A2F /* composite.vert */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = composite.vert; path = bin/data/shaders/composite.vert; sourceTree = SOURCE_ROOT; };
 		D342181422D37BEB00659A2F /* deferred.vert */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = deferred.vert; path = bin/data/shaders/deferred.vert; sourceTree = SOURCE_ROOT; };
+		D3C5171922D62C94009ABC79 /* util */ = {isa = PBXFileReference; lastKnownFileType = folder; path = util; sourceTree = "<group>"; };
 		E42962AC2163EDD300A6A9E2 /* ofCamera.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ofCamera.cpp; path = ../../../libs/openFrameworks/3d/ofCamera.cpp; sourceTree = SOURCE_ROOT; };
 		E42962AD2163EDD300A6A9E2 /* ofMesh.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ofMesh.h; path = ../../../libs/openFrameworks/3d/ofMesh.h; sourceTree = SOURCE_ROOT; };
 		E42962AE2163EDD300A6A9E2 /* ofNode.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ofNode.h; path = ../../../libs/openFrameworks/3d/ofNode.h; sourceTree = SOURCE_ROOT; };
@@ -539,6 +540,7 @@
 		E4B69E1C0A3A1BDC003C02F2 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				D3C5171922D62C94009ABC79 /* util */,
 				D342181222D37BEB00659A2F /* composite.frag */,
 				D342181322D37BEB00659A2F /* composite.vert */,
 				D342180F22D37BEA00659A2F /* deferred.frag */,

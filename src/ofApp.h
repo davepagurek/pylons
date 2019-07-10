@@ -8,6 +8,7 @@ float noise(const glm::vec3& p, int octaves);
 class ofApp : public ofBaseApp{
 private:
   ofFbo img;
+  ofFbo bg;
   SAO sao;
   float z;
 

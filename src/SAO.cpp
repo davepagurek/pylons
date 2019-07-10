@@ -37,6 +37,14 @@ void SAO::begin() {
   deferred.begin();
 }
 
+void SAO::clearDepth() {
+  deferredFbo.clearDepthBuffer(1);
+}
+
+void SAO::setFog(ofFbo* newFog) {
+  fog = newFog;
+}
+
 void SAO::end(ofFbo* fbo) {
   // End deferred render
   deferred.end();
@@ -64,6 +72,15 @@ void SAO::end(ofFbo* fbo) {
   composite.setUniformTexture("depth", deferredFbo.getDepthTexture(), 1);
   composite.setUniformTexture("color", deferredFbo.getTexture(), 2);
   composite.setUniformTexture("occlusion", occlusionFbo.getTexture(), 3);
+  composite.setUniform1i("useFog", static_cast<bool>(fog));
+  if (fog) {
+    composite.setUniformTexture("fog", fog->getTexture(), 4);
+  }
+  composite.setUniform4f("projInfo",
+                         -2.0f / (ofGetWidth() * proj[0][0]),
+                         -2.0f / (ofGetHeight() * proj[1][1]),
+                         (1.0f - proj[0][2]) / proj[0][0],
+                         (1.0f + proj[1][2]) / proj[1][1]);
   deferredFbo.draw(0, 0);
   composite.end();
   if (fbo) fbo->end();
