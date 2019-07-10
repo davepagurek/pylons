@@ -11,6 +11,8 @@ private:
   ofFbo bg;
   SAO sao;
   float z;
+  ofMesh pylon;
+  glm::vec3 toSun;
 
 public:
   void setup();

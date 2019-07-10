@@ -4,6 +4,17 @@
 void ofApp::setup(){
   img.allocate(ofGetWidth(), ofGetHeight(), GL_RGBA);
   bg.allocate(ofGetWidth(), ofGetHeight(), GL_RGBA);
+  pylon.load("pylon.ply");
+  toSun = glm::vec3(-1, 0, 0);
+  
+  ofColor pylonColor, pylonHighlightColor;
+  pylonColor.setHex(0x687580);
+  pylonHighlightColor.setHex(0xA0BCB9);
+  for (size_t i = 0; i < pylon.getNumVertices(); i++) {
+    const auto& n = pylon.getNormal(i);
+    pylon.addColor(pylonColor.getLerped(pylonHighlightColor, std::max(0.0f, glm::dot(toSun, n))));
+  }
+  
   sao.setup();
   
   updateImage();
@@ -24,9 +35,11 @@ float noise(const glm::vec3& p, int octaves) {
 
 void ofApp::updateImage() {
   // Background
-  ofColor top, bottom;
+  ofColor top, topShade, bottomSun, bottomShade;
   top.setHex(0x9BCDE7);
-  bottom.setHex(0xEFE591);
+  bottomSun.setHex(0xEFE591);
+  topShade.setHex(0xB0A5BA);
+  bottomShade.setHex(0x695D80);
   
   ofMesh bgRect;
   bgRect.addVertex(glm::vec3(0, 0, 0));
@@ -34,9 +47,9 @@ void ofApp::updateImage() {
   bgRect.addVertex(glm::vec3(ofGetWidth(), ofGetHeight(), 0));
   bgRect.addVertex(glm::vec3(0, ofGetHeight(), 0));
   bgRect.addColor(top);
-  bgRect.addColor(top);
-  bgRect.addColor(bottom);
-  bgRect.addColor(bottom);
+  bgRect.addColor(topShade);
+  bgRect.addColor(bottomShade);
+  bgRect.addColor(bottomSun);
   bgRect.addIndex(0);
   bgRect.addIndex(1);
   bgRect.addIndex(2);
@@ -61,8 +74,6 @@ void ofApp::updateImage() {
   ofRotateXDeg(20);
   
   z = ofRandom(0, 4000);
-  
-  glm::vec3 toSun(-1, 0, 0);
   
   ofMesh tree = ofMesh::sphere(16, 5); //Mesh::cone(16, 40, 6, 2);
   ofColor treeColor, brightTreeColor;
@@ -90,7 +101,7 @@ void ofApp::updateImage() {
   for (int i = 0; i < numHills; i++) {
     auto& hill = hills[i];
     
-    xOff += ofRandom(-1, 1) * ofGetWidth()*0.7;
+    xOff += ofRandom(-1, 1) * ofGetWidth()*0.5 * (i*0.4+1);
     for (size_t x = 0; x < w; x++) {
       for (size_t y = 0; y < h; y++) {
         float mixAmount = float((x-w2)*(x-w2)+(y-h2)*(y-h2))/std::max(float(w2*w2),float(h2*h2));
@@ -146,6 +157,14 @@ void ofApp::updateImage() {
       tree.draw();
       ofPopMatrix();
     }
+    
+    auto pylonLocation = hill.getVertex(w * (static_cast<int>(h*ofRandom(0.4, 0.6)) + ofRandom(0.4, 0.6)));
+    ofPushMatrix();
+    ofTranslate(pylonLocation);
+    ofTranslate(glm::vec3(0, 20, 0));
+    ofScale(80);
+    pylon.draw();
+    ofPopMatrix();
   }
   
   ofPopMatrix();
