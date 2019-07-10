@@ -62,11 +62,16 @@ void ofApp::updateImage() {
   
   z = ofRandom(0, 4000);
   
-  ofMesh tree = ofMesh::cone(16, 40, 6, 2);
-  ofColor treeColor;
+  glm::vec3 toSun(-1, 0, 0);
+  
+  ofMesh tree = ofMesh::sphere(16, 5); //Mesh::cone(16, 40, 6, 2);
+  ofColor treeColor, brightTreeColor;
   treeColor.setHex(0x3E5C56);
+  brightTreeColor.setHex(0x7E9674);
   for (size_t i = 0; i < tree.getNumVertices(); i++) {
-    tree.addColor(treeColor);
+    const auto& v = tree.getVertex(i);
+    glm::vec3 n = glm::normalize(v);
+    tree.addColor(treeColor.getLerped(brightTreeColor, std::max(0.0f, glm::dot(toSun, n))));
   }
   
   constexpr int numHills = 5;
@@ -76,8 +81,9 @@ void ofApp::updateImage() {
   float w2 = w/2;
   float h2 = h/2;
 
-  ofColor hillColor;
+  ofColor hillColor, sunColor;
   hillColor.setHex(0x465652);
+  sunColor.setHex(0x968974);
 //  hillColor.setHex(0x3E5C56);
   
   float xOff = 0;
@@ -105,6 +111,11 @@ void ofApp::updateImage() {
         hill.addIndex(y * w + x + 1);
         hill.addIndex((y + 1) * w + x);
         
+        glm::vec3 u = hill.getVertex((y+1)*w + x) - hill.getVertex(y*w + x);
+        glm::vec3 v = hill.getVertex(y*w + x+1) - hill.getVertex(y*w + x);
+        glm::vec3 n = glm::normalize(glm::cross(u, v));
+        hill.setColor(y*w + x, hillColor.getLerped(sunColor, std::max(0.0f, glm::dot(n, toSun))));
+        
         // Face 2
         hill.addIndex((y + 1) * w + x);
         hill.addIndex((y + 1) * w + x + 1);
@@ -119,7 +130,7 @@ void ofApp::updateImage() {
     for (int i = 0; i < numTrees; i++) {
       ofPushMatrix();
       auto* face = &faces[(int)ofRandom(faces.size())];
-      while (glm::dot(face->getFaceNormal(), glm::vec3(0, 1, 0)) < 0.1) {
+      while (ofRandom(0, 1) > glm::dot(face->getFaceNormal(), glm::vec3(0, 1, 0))) {
         face = &faces[(int)ofRandom(faces.size())];
       }
       ofTranslate((face->getVertex(0) + face->getVertex(1) + face->getVertex(2)) / 3.0);
@@ -129,7 +140,9 @@ void ofApp::updateImage() {
       auto lessRotated = glm::slerp(quat, glm::quat(), 0.8f);
       ofMultMatrix(glm::toMat4(lessRotated));
       
-      ofScale(glm::vec3(1, ofRandom(0.8, 2), 1));
+      float sx = ofRandom(0.8, 3);
+      float sr = ofRandom(0.8, 1.4);
+      ofScale(glm::vec3(sr, sx, sr));
       tree.draw();
       ofPopMatrix();
     }
