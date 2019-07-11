@@ -204,28 +204,50 @@ void ofApp::updateImage() {
   }
   
   {
-    ofPolyline birdPath;
-    float d = 120;
+    ofPolyline birdPathL, birdPathR;
+    float d = 50;
     float v = 500;
-    glm:: vec3 dir(ofRandom(-v, v), ofRandom(-v*0.2, v*0.2), ofRandom(-v, v));
-//    birdPath.addVertex(glm::vec3(ofRandom(-ofGetWidth()*0.1, ofGetWidth()*0.1), -600, 800));
-    birdPath.addVertex(glm::vec3(ofRandom(-ofGetWidth(), ofGetWidth()), ofRandom(-1800, -2100), ofRandom(-500, 200)));
-    for (size_t i = 0; i < 9; i++) {
-      birdPath.curveTo(birdPath.getVertices().back() + dir + glm::vec3(ofRandom(-d, d), ofRandom(-d, d), ofRandom(-d, d)));
-    }
-//    birdPath.draw();
+    constexpr int numPoints = 3;
+    glm::vec3 dir(ofRandom(-v, v), ofRandom(-v, v)*0.2, ofRandom(-v, v));
     
-    birdPath = birdPath.getResampledBySpacing(5*3*6);
-    for (size_t i = 0; i < birdPath.getVertices().size(); i++) {
-      ofPushMatrix();
-      
-      float t = i + ofRandom(-0.2, 0.2);
-      ofTranslate(birdPath.getPointAtIndexInterpolated(t));
-      ofMultMatrix(glm::toMat4(glm::rotation(glm::vec3(0, 0, 1), birdPath.getTangentAtIndexInterpolated(t))));
-      ofTranslate(glm::vec3(ofRandom(-20, 20), ofRandom(-20, 20), 0));
-      for (auto& m : makeBird(ofRandom(0, 1))) m.draw();
-      
-      ofPopMatrix();
+    glm::vec3 tailL(ofRandom(-ofGetWidth(), ofGetWidth()), ofRandom(-1800, -2100), ofRandom(-500, 200));
+    glm::vec3 offset;
+    while (glm::length2(offset) < 1000) {
+      offset = glm::vec3(ofRandom(-v, v)*2, ofRandom(-v, v)*0.1, ofRandom(-v, v)*2);
+    }
+    glm::vec3 tailR = tailL + offset;
+    glm::vec3 tip = (tailL + tailR) / 2 + numPoints * dir;
+    
+    birdPathL.curveTo(tailL);
+    for (size_t i = 0; i < numPoints - 1; i++) {
+      birdPathL.curveTo(tailL + (tip - tailL)/numPoints*i + glm::vec3(ofRandom(-d, d), ofRandom(-d, d)*0.1, ofRandom(-d, d)));
+    }
+    birdPathL.curveTo(tip);
+    birdPathL.curveTo(tip + dir);
+    
+    birdPathR.curveTo(tailR);
+    for (size_t i = 0; i < numPoints - 1; i++) {
+      birdPathR.curveTo(tailR + (tip - tailR)/numPoints*i + glm::vec3(ofRandom(-d, d), ofRandom(-d, d)*0.1, ofRandom(-d, d)));
+    }
+    birdPathR.curveTo(tip);
+    birdPathR.curveTo(tip + dir);
+    
+//    birdPathL.draw();
+//    birdPathR.draw();
+    
+    for (ofPolyline* path : {&birdPathL, &birdPathR}) {
+      ofPolyline birdPath = path->getResampledBySpacing(5*3*6);
+      for (size_t i = 0; i < birdPath.getVertices().size(); i++) {
+        ofPushMatrix();
+        
+        float t = i + ofRandom(-0.2, 0.2);
+        ofTranslate(birdPath.getPointAtIndexInterpolated(t));
+        ofMultMatrix(glm::toMat4(glm::rotation(glm::vec3(0, 0, 1), birdPath.getTangentAtIndexInterpolated(t))));
+        ofTranslate(glm::vec3(ofRandom(-20, 20), ofRandom(-20, 20), 0));
+        for (auto& m : makeBird(ofRandom(0, 1))) m.draw();
+        
+        ofPopMatrix();
+      }
     }
   }
   
