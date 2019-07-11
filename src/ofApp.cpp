@@ -205,24 +205,26 @@ void ofApp::updateImage() {
   
   {
     ofPolyline birdPath;
-    float d = 800;
-    float v = 200;
+    float d = 400;
+    float v = 100;
     glm:: vec3 dir(ofRandom(-v, v), ofRandom(-v, v), ofRandom(-v, v));
-    birdPath.addVertex(glm::vec3(ofRandom(-ofGetWidth()*0.8, ofGetWidth()*0.8), ofRandom(-2000, -2500), ofRandom(-300, -1000)));
+    birdPath.addVertex(glm::vec3(ofRandom(-ofGetWidth()*0.1, ofGetWidth()*0.1), -600, 800));
+//    birdPath.addVertex(glm::vec3(ofRandom(-ofGetWidth()*0.8, ofGetWidth()*0.8), ofRandom(-1500, -2400), ofRandom(-100, -500)));
     for (size_t i = 0; i < 9; i++) {
       birdPath.curveTo(birdPath.getVertices().back() + dir + glm::vec3(ofRandom(-d, d), ofRandom(-d, d), ofRandom(-d, d)));
     }
 //    birdPath.draw();
     
-    constexpr size_t numBirds = 60;
-    for (size_t i = 0; i < numBirds; i++) {
+//    constexpr size_t numBirds = 60;
+    birdPath = birdPath.getResampledBySpacing(5*3*3);
+    for (size_t i = 0; i < birdPath.getVertices().size(); i++) {
+//    for (auto& position : )
       ofPushMatrix();
       
-      float t = ofRandom(0, birdPath.getVertices().size());
+      float t = i + ofRandom(-0.5, 0.5);
       ofTranslate(birdPath.getPointAtIndexInterpolated(t));
       ofMultMatrix(glm::toMat4(glm::rotation(glm::vec3(0, 0, 1), birdPath.getTangentAtIndexInterpolated(t))));
-      ofScale(glm::vec3(5, 1, 1));
-      makeBird(ofRandom(0, 1)).draw();
+      for (auto& m : makeBird(ofRandom(0, 1))) m.draw();
       
       ofPopMatrix();
     }
@@ -232,12 +234,53 @@ void ofApp::updateImage() {
   sao.end(&img);
 }
 
-ofMesh ofApp::makeBird(float t) {
-  ofMesh m;
+std::vector<ofMesh> ofApp::makeBird(float t) {
+  ofColor c;
+  c.setHex(0x333333);
   
+  ofMesh body = ofMesh::sphere(5, 6);
+  auto bodyTransform = glm::scale(glm::vec3(1, 1, 3));
+  for (auto& v : body.getVertices()) {
+    v = bodyTransform * glm::vec4(v, 1);
+    body.addColor(c);
+  }
   
+  ofMesh mesh;
   
-  return m;
+  constexpr int numSegments = 4;
+  for (auto side : {-1, 1}) {
+    int offset = mesh.getNumVertices();
+    
+    glm::mat4 m;
+    m *= glm::scale(glm::vec3(side, 1, 1));
+    m *= glm::rotate(static_cast<float>(t * 2 * M_PI), glm::vec3(0, 0, 1));
+    
+    float wingLength = 5;
+    for (int segment = 0; segment <= numSegments; segment++) {
+      mesh.addVertex(glm::vec3(m * glm::vec4(0, 0, -wingLength, 1)));
+      mesh.addVertex(glm::vec3(m * glm::vec4(0, 0, wingLength, 1)));
+      
+      mesh.addColor(c);
+      mesh.addColor(c);
+      
+      m *= glm::translate(glm::vec3(10, 0, 0));
+      m *= glm::rotate(static_cast<float>(0.5 * PI / 6), glm::vec3(0, 0, 1));
+      wingLength *= 0.8;
+//      ofRotateZRad(0.5 * PI / 6);
+    }
+    
+    for (int segment = 0; segment < numSegments; segment++) {
+      mesh.addIndex(offset + segment*2);
+      mesh.addIndex(offset + segment*2 + 1);
+      mesh.addIndex(offset + segment*2 + 2);
+      
+      mesh.addIndex(offset + segment*2 + 2);
+      mesh.addIndex(offset + segment*2 + 3);
+      mesh.addIndex(offset + segment*2 + 1);
+    }
+  }
+  
+  return {mesh, body};
 }
 
 ofMesh ofApp::skin(ofPolyline line, float r, ofColor c, int precision) {
