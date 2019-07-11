@@ -1,9 +1,11 @@
 #include "ofApp.h"
+#include "constants.h"
+
 
 //--------------------------------------------------------------
 void ofApp::setup(){
-  img.allocate(ofGetWidth(), ofGetHeight(), GL_RGBA);
-  bg.allocate(ofGetWidth(), ofGetHeight(), GL_RGBA);
+  img.allocate(ofGetWidth()*SCALE, ofGetHeight()*SCALE, GL_RGBA);
+  bg.allocate(ofGetWidth()*SCALE, ofGetHeight()*SCALE, GL_RGBA);
   pylon.load("pylon.ply");
   toSun = glm::vec3(-1, 0, 0);
   
@@ -43,9 +45,9 @@ void ofApp::updateImage() {
   
   ofMesh bgRect;
   bgRect.addVertex(glm::vec3(0, 0, 0));
-  bgRect.addVertex(glm::vec3(ofGetWidth(), 0, 0));
-  bgRect.addVertex(glm::vec3(ofGetWidth(), ofGetHeight(), 0));
-  bgRect.addVertex(glm::vec3(0, ofGetHeight(), 0));
+  bgRect.addVertex(glm::vec3(ofGetWidth(), 0, 0) * SCALE);
+  bgRect.addVertex(glm::vec3(ofGetWidth(), ofGetHeight(), 0) * SCALE);
+  bgRect.addVertex(glm::vec3(0, ofGetHeight(), 0) * SCALE);
   bgRect.addColor(top);
   bgRect.addColor(topShade);
   bgRect.addColor(bottomShade);
@@ -61,6 +63,7 @@ void ofApp::updateImage() {
   bgRect.draw();
   bg.end();
   
+  ofPushMatrix();
   ofColor shadowColor;
   shadowColor.setHex(0x4B1322);
   sao.setShadowColor(shadowColor);
@@ -69,7 +72,6 @@ void ofApp::updateImage() {
   sao.setFog(&bg);
   sao.clearDepth();
   
-  ofPushMatrix();
   ofTranslate(glm::vec3(ofGetWidth()/2, ofGetHeight()*1.4, -200*5));
   ofRotateXDeg(20);
   
@@ -385,7 +387,7 @@ ofMesh ofApp::skin(ofPolyline line, float r, ofColor c, int precision) {
 //--------------------------------------------------------------
 void ofApp::draw(){
   ofClear(0,0,0,1);
-  img.draw(0, 0);
+  img.draw(0, 0, ofGetWidth(), ofGetHeight());
 }
 
 //--------------------------------------------------------------

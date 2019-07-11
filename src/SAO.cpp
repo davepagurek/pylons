@@ -1,10 +1,11 @@
 #include "SAO.h"
+#include "constants.h"
 
 void SAO::setup() {
   {
     ofFbo::Settings settings;
-    settings.width = ofGetWidth();
-    settings.height = ofGetHeight();
+    settings.width = ofGetWidth() * SCALE;
+    settings.height = ofGetHeight() * SCALE;
     settings.useDepth = true;
     settings.textureTarget = GL_TEXTURE_RECTANGLE_ARB;
     settings.internalformat = GL_RGBA32F;
@@ -15,8 +16,8 @@ void SAO::setup() {
   
   {
     ofFbo::Settings settings;
-    settings.width = ofGetWidth();
-    settings.height = ofGetHeight();
+    settings.width = ofGetWidth() * SCALE;
+    settings.height = ofGetHeight() * SCALE;
     settings.textureTarget = GL_TEXTURE_RECTANGLE_ARB;
     settings.internalformat = GL_RGBA32F;
     occlusionFbo.allocate(settings);
@@ -37,6 +38,8 @@ void SAO::begin() {
   //  deferredFbo.clearDepthBuffer(1);
   ofEnableDepthTest();
   deferred.begin();
+  ofPushMatrix();
+  ofScale(glm::vec3(SCALE, SCALE, SCALE));
 }
 
 void SAO::clearDepth() {
@@ -55,6 +58,7 @@ void SAO::end(ofFbo* fbo) {
   // End deferred render
   deferred.end();
   deferredFbo.end();
+  ofPopMatrix();
   
   // AO render
   ofDisableDepthTest();
@@ -63,11 +67,12 @@ void SAO::end(ofFbo* fbo) {
   occlusion.setUniformTexture("depth", deferredFbo.getDepthTexture(), 1);
   auto proj = ofGetCurrentMatrix(OF_MATRIX_PROJECTION);
   occlusion.setUniform4f("projInfo",
-                         -2.0f / (ofGetWidth() * proj[0][0]),
-                         -2.0f / (ofGetHeight() * proj[1][1]),
+                         -2.0f / (ofGetWidth()*SCALE * proj[0][0]),
+                         -2.0f / (ofGetHeight()*SCALE * proj[1][1]),
                          (1.0f - proj[0][2]) / proj[0][0],
                          (1.0f + proj[1][2]) / proj[1][1]);
   occlusion.setUniform2i("screenSize", ofGetWidth(), ofGetHeight());
+  occlusion.setUniform1f("scale", SCALE);
   deferredFbo.draw(0, 0);
   occlusion.end();
   occlusionFbo.end();
@@ -83,8 +88,8 @@ void SAO::end(ofFbo* fbo) {
     composite.setUniformTexture("fog", fog->getTexture(), 4);
   }
   composite.setUniform4f("projInfo",
-                         -2.0f / (ofGetWidth() * proj[0][0]),
-                         -2.0f / (ofGetHeight() * proj[1][1]),
+                         -2.0f / (ofGetWidth()*SCALE * proj[0][0]),
+                         -2.0f / (ofGetHeight()*SCALE * proj[1][1]),
                          (1.0f - proj[0][2]) / proj[0][0],
                          (1.0f + proj[1][2]) / proj[1][1]);
   composite.setUniform3f("shadowColor", glm::vec3(shadow.r, shadow.g, shadow.b) / shadow.limit());

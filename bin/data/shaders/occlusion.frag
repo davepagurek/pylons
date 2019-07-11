@@ -3,6 +3,7 @@
 uniform sampler2DRect depth;
 uniform vec4 projInfo;
 uniform ivec2 screenSize;
+uniform float scale;
 
 out vec4 fragColor;
 
@@ -10,7 +11,7 @@ const int NUM_SAMPLES = 37;
 const int NUM_SPIRAL_TURNS = 7;
 const float EPSILON = 0.1;
 const float BIAS = 0.7;
-const float WORLD_SPACE_RADIUS = 40.0; // radius of influence in world space
+const float WORLD_SPACE_RADIUS = 60.0; // radius of influence in world space
 const float INTENSITY = 30.0;
 const float M_PI = 3.1415926535897932384626433832795;
 
@@ -54,7 +55,7 @@ void main() {
   float initialAngle = 2.0 * M_PI * sampleNoise.x;
   
   // radius of influence in screen space
-  float screenSpaceSampleRadius  = 100.0 * WORLD_SPACE_RADIUS / worldSpaceOrigin.z;
+  float screenSpaceSampleRadius  = 100.0 * WORLD_SPACE_RADIUS / worldSpaceOrigin.z * scale;
 //  float screenSpaceSampleRadius = WORLD_SPACE_RADIUS;
   
   float occlusion = 0.0;
