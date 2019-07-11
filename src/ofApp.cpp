@@ -205,25 +205,24 @@ void ofApp::updateImage() {
   
   {
     ofPolyline birdPath;
-    float d = 400;
-    float v = 100;
-    glm:: vec3 dir(ofRandom(-v, v), ofRandom(-v, v), ofRandom(-v, v));
-    birdPath.addVertex(glm::vec3(ofRandom(-ofGetWidth()*0.1, ofGetWidth()*0.1), -600, 800));
-//    birdPath.addVertex(glm::vec3(ofRandom(-ofGetWidth()*0.8, ofGetWidth()*0.8), ofRandom(-1500, -2400), ofRandom(-100, -500)));
+    float d = 120;
+    float v = 500;
+    glm:: vec3 dir(ofRandom(-v, v), ofRandom(-v*0.2, v*0.2), ofRandom(-v, v));
+//    birdPath.addVertex(glm::vec3(ofRandom(-ofGetWidth()*0.1, ofGetWidth()*0.1), -600, 800));
+    birdPath.addVertex(glm::vec3(ofRandom(-ofGetWidth(), ofGetWidth()), ofRandom(-1800, -2100), ofRandom(-500, 200)));
     for (size_t i = 0; i < 9; i++) {
       birdPath.curveTo(birdPath.getVertices().back() + dir + glm::vec3(ofRandom(-d, d), ofRandom(-d, d), ofRandom(-d, d)));
     }
 //    birdPath.draw();
     
-//    constexpr size_t numBirds = 60;
-    birdPath = birdPath.getResampledBySpacing(5*3*3);
+    birdPath = birdPath.getResampledBySpacing(5*3*6);
     for (size_t i = 0; i < birdPath.getVertices().size(); i++) {
-//    for (auto& position : )
       ofPushMatrix();
       
-      float t = i + ofRandom(-0.5, 0.5);
+      float t = i + ofRandom(-0.2, 0.2);
       ofTranslate(birdPath.getPointAtIndexInterpolated(t));
       ofMultMatrix(glm::toMat4(glm::rotation(glm::vec3(0, 0, 1), birdPath.getTangentAtIndexInterpolated(t))));
+      ofTranslate(glm::vec3(ofRandom(-20, 20), ofRandom(-20, 20), 0));
       for (auto& m : makeBird(ofRandom(0, 1))) m.draw();
       
       ofPopMatrix();
@@ -249,34 +248,62 @@ std::vector<ofMesh> ofApp::makeBird(float t) {
   
   constexpr int numSegments = 4;
   for (auto side : {-1, 1}) {
-    int offset = mesh.getNumVertices();
-    
-    glm::mat4 m;
-    m *= glm::scale(glm::vec3(side, 1, 1));
-    m *= glm::rotate(static_cast<float>(t * 2 * M_PI), glm::vec3(0, 0, 1));
-    
-    float wingLength = 5;
-    for (int segment = 0; segment <= numSegments; segment++) {
-      mesh.addVertex(glm::vec3(m * glm::vec4(0, 0, -wingLength, 1)));
-      mesh.addVertex(glm::vec3(m * glm::vec4(0, 0, wingLength, 1)));
+    int sideOffset = mesh.getNumVertices();
+    for (auto yOff : {-1, 1}) {
+      int offset = mesh.getNumVertices();
       
-      mesh.addColor(c);
-      mesh.addColor(c);
+      glm::mat4 m;
+      m *= glm::scale(glm::vec3(side, 1, 1));
+      m *= glm::rotate(static_cast<float>((t * 0.8 + 0.1) * M_PI - 0.5 * M_PI), glm::vec3(0, 0, 1));
       
-      m *= glm::translate(glm::vec3(10, 0, 0));
-      m *= glm::rotate(static_cast<float>(0.5 * PI / 6), glm::vec3(0, 0, 1));
-      wingLength *= 0.8;
-//      ofRotateZRad(0.5 * PI / 6);
+      float wingLength = 7;
+      m *= glm::translate(glm::vec3(2, 0, 0));
+      for (int segment = 0; segment <= numSegments; segment++) {
+        mesh.addVertex(glm::vec3(m * glm::vec4(0, yOff, -wingLength, 1)));
+        mesh.addVertex(glm::vec3(m * glm::vec4(0, yOff, wingLength, 1)));
+        
+        mesh.addColor(c);
+        mesh.addColor(c);
+        
+        m *= glm::translate(glm::vec3(10, 0, 0));
+        m *= glm::rotate(static_cast<float>(0.5 * PI / 6), glm::vec3(0, 0, 1));
+        wingLength *= 0.8;
+      }
+    
+      // Connect the top face of the wing
+      for (int segment = 0; segment < numSegments; segment++) {
+        mesh.addIndex(offset + segment*2);
+        mesh.addIndex(offset + segment*2 + 1);
+        mesh.addIndex(offset + segment*2 + 2);
+        
+        mesh.addIndex(offset + segment*2 + 2);
+        mesh.addIndex(offset + segment*2 + 3);
+        mesh.addIndex(offset + segment*2 + 1);
+      }
     }
     
+    // Connect the front/back sides of the wing
     for (int segment = 0; segment < numSegments; segment++) {
-      mesh.addIndex(offset + segment*2);
-      mesh.addIndex(offset + segment*2 + 1);
-      mesh.addIndex(offset + segment*2 + 2);
+      for (auto side : {0, 1}) {
+        mesh.addIndex(sideOffset + segment*2 + side);
+        mesh.addIndex(sideOffset + (segment+1)*2 + side);
+        mesh.addIndex(sideOffset + (numSegments+1)*2 + (segment+1)*2 + side);
+        
+        mesh.addIndex(sideOffset + segment*2 + side);
+        mesh.addIndex(sideOffset + (numSegments+1)*2 + segment*2 + side);
+        mesh.addIndex(sideOffset + (numSegments+1)*2 + (segment+1)*2 + side);
+      }
+    }
+    
+    // Connect the left side of the wing
+    for (auto tip : {0, numSegments}) {
+      mesh.addIndex(sideOffset + tip*2);
+      mesh.addIndex(sideOffset + tip*2 + 1);
+      mesh.addIndex(sideOffset + (numSegments+1)*2 + tip*2 + 1);
       
-      mesh.addIndex(offset + segment*2 + 2);
-      mesh.addIndex(offset + segment*2 + 3);
-      mesh.addIndex(offset + segment*2 + 1);
+      mesh.addIndex(sideOffset + tip*2);
+      mesh.addIndex(sideOffset + (numSegments+1)*2 + tip*2);
+      mesh.addIndex(sideOffset + (numSegments+1)*2 + tip*2 + 1);
     }
   }
   
